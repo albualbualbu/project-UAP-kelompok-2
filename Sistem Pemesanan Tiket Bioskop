@@ -8,3 +8,318 @@
 #include <fstream>
 
 using namespace std;
+struct Tiket {
+    string nama;
+    string kodeKursi;
+    string film;
+    string hari;
+    string jadwal;
+    int harga;
+};
+
+queue<Tiket> antrianTiket;
+stack<Tiket> pembatalan;
+vector<Tiket> daftarTiket;
+map<string, int> poinPelanggan;
+
+const int ROWS = 5;
+const int COLS = 10;
+bool kursiTerisi[ROWS][COLS] = { false };
+
+bool konversiKodeKursi(const string& kode, int& row, int& col) {
+    if (kode.length() < 2 || kode.length() > 3) return false;
+    row = toupper(kode[0]) - 'A';
+    try {
+        col = stoi(kode.substr(1)) - 1;
+    } catch (...) {
+        return false;
+    }
+    return row >= 0 && row < ROWS && col >= 0 && col < COLS;
+}
+
+void tampilkanKursi() {
+    cout << "\nTata Letak Kursi (XX = Terisi):\n";
+    for (int i = 0; i < ROWS; ++i) {
+        char rowChar = 'A' + i;
+        for (int j = 0; j < COLS; ++j) {
+            if (kursiTerisi[i][j])
+                cout << "[XX] ";
+            else
+                cout << "[" << rowChar << j + 1 << "] ";
+        }
+        cout << endl;
+    }
+}
+
+void cetakTiket(const Tiket& t) {
+    cout << "\n===== Tiket Bioskop =====\n";
+    cout << "Nama   : " << t.nama << endl;
+    cout << "Film   : " << t.film << endl;
+    cout << "Hari   : " << t.hari << endl;
+    cout << "Jadwal : " << t.jadwal << endl;
+    cout << "Kursi  : " << t.kodeKursi << endl;
+    cout << "Harga  : Rp" << t.harga << endl;
+    cout << "=========================\n";
+}
+
+void cetakTiketKeFile(const Tiket& t) {
+    string namaFile = "tiket_" + t.nama + "_" + t.kodeKursi + ".txt";
+    ofstream file(namaFile);
+    if (file.is_open()) {
+        file << "===== Tiket Bioskop =====\n";
+        file << "Nama   : " << t.nama << "\n";
+        file << "Film   : " << t.film << "\n";
+        file << "Hari   : " << t.hari << "\n";
+        file << "Jadwal : " << t.jadwal << "\n";
+        file << "Kursi  : " << t.kodeKursi << "\n";
+        file << "Harga  : Rp" << t.harga << "\n";
+        file << "=========================\n";
+        file.close();
+        cout << "📄 Tiket disimpan ke file: " << namaFile << endl;
+    } else {
+        cout << "Gagal menyimpan tiket ke file.\n";
+    }
+}
+
+int hitungHarga(const string& hari, const string& jadwal) {
+    bool weekend = (hari == "Sabtu" || hari == "Minggu");
+    int hargaDasar = weekend ? 60000 : 50000;
+    int jam = 0;
+    try {
+        jam = stoi(jadwal.substr(0, 2));
+    } catch (...) {
+        jam = 0;
+    }
+    if (jam >= 18) hargaDasar += 10000;
+    return hargaDasar;
+}
+
+void tambahPoin(const string& nama) {
+    poinPelanggan[nama] += 10;
+    cout << "Poin " << nama << ": " << poinPelanggan[nama] << " poin\n";
+}
+
+void tambahPemesanan() {
+    int jumlah;
+    cout << "\nMasukkan nama pelanggan: ";
+    string nama;
+    cin.ignore();
+    getline(cin, nama);
+
+    string film, hari, jadwal;
+    
+    cout << " > Jumbo\n > The Nun\n > Ayat-ayat Cinta 2\n > Agak Laen\nMasukkan nama film: ";
+    getline(cin, film);
+    
+    cout <<  " - Senin\n - Selasa\n - Rabu\n - Kamis\n - Jum'at\n - Sabtu \n - Minggu\nMasukkan hari : ";
+    getline(cin, hari);
+    
+    cout << " 10:15  12:05  14:10\n 16:15  18:05  20:10\nMasukkan jadwal : ";
+    getline(cin, jadwal);
+    
+
+    cout << "Berapa tiket yang ingin dipesan? ";
+    cin >> jumlah;
+    cin.ignore();
+
+    for (int i = 0; i < jumlah; i++) {
+        tampilkanKursi();
+        string kodeKursi;
+        cout << "Pilih kode kursi ke-" << (i + 1) << " (contoh: B4): ";
+        cin >> kodeKursi;
+
+        int row, col;
+        if (!konversiKodeKursi(kodeKursi, row, col) || kursiTerisi[row][col]) {
+            cout << "Kode kursi tidak valid atau sudah dipesan.\n";
+            i--;
+            continue;
+        }
+
+        kursiTerisi[row][col] = true;
+        Tiket t = {nama, kodeKursi, film, hari, jadwal, hitungHarga(hari, jadwal)};
+        antrianTiket.push(t);
+        daftarTiket.push_back(t);
+
+        cetakTiket(t);
+        cetakTiketKeFile(t);
+        tambahPoin(nama);
+        cout << "Tiket berhasil dipesan.\n";
+    }
+
+    // Buy 2 get 1 free (Kamis)
+    if (jumlah == 2 && hari == "Kamis") {
+        tampilkanKursi();
+        string kodeGratis;
+        cout << "🎁 Anda dapat 1 tiket GRATIS! Pilih kode kursi: ";
+        cin >> kodeGratis;
+
+        int row, col;
+        if (!konversiKodeKursi(kodeGratis, row, col) || kursiTerisi[row][col]) {
+            cout << "Kode kursi tidak valid atau sudah terisi. Tiket gratis hangus.\n";
+            return;
+        }
+
+        kursiTerisi[row][col] = true;
+        Tiket gratis = {nama, kodeGratis, film, hari, jadwal, 0};
+        antrianTiket.push(gratis);
+        daftarTiket.push_back(gratis);
+
+        cetakTiket(gratis);
+        cetakTiketKeFile(gratis);
+        cout << "✅ Tiket gratis berhasil ditambahkan!\n";
+    }
+}
+
+void tampilkanTiket() {
+    cout << "\nDaftar Pemesanan Tiket:\n";
+    for (const auto& t : daftarTiket) {
+        cout << "Nama: " << t.nama
+             << " | Kursi: " << t.kodeKursi
+             << " | Film: " << t.film
+             << " | Hari: " << t.hari
+             << " | Jadwal: " << t.jadwal
+             << " | Harga: Rp" << t.harga << endl;
+    }
+}
+
+void editTiket() {
+    string nama;
+    cout << "Masukkan nama untuk edit: ";
+    cin >> nama;
+
+    for (auto& t : daftarTiket) {
+        if (t.nama == nama) {
+            int oldRow, oldCol;
+            konversiKodeKursi(t.kodeKursi, oldRow, oldCol);
+            tampilkanKursi();
+            cout << "Masukkan kode kursi baru: ";
+            string newKode;
+            cin >> newKode;
+
+            int newRow, newCol;
+            if (!konversiKodeKursi(newKode, newRow, newCol) || kursiTerisi[newRow][newCol]) {
+                cout << "Kode kursi tidak valid atau sudah terisi.\n";
+                return;
+            }
+
+            kursiTerisi[oldRow][oldCol] = false;
+            kursiTerisi[newRow][newCol] = true;
+            t.kodeKursi = newKode;
+
+            cout << "Data berhasil diubah.\n";
+            return;
+        }
+    }
+    cout << "Data tidak ditemukan.\n";
+}
+
+void hapusTiket() {
+    string nama;
+    cout << "Masukkan nama untuk hapus: ";
+    cin >> nama;
+
+    for (auto it = daftarTiket.begin(); it != daftarTiket.end(); ++it) {
+        if (it->nama == nama) {
+            int row, col;
+            konversiKodeKursi(it->kodeKursi, row, col);
+            kursiTerisi[row][col] = false;
+            pembatalan.push(*it);
+            daftarTiket.erase(it);
+            cout << "Tiket berhasil dihapus dan dicatat ke riwayat.\n";
+            return;
+        }
+    }
+    cout << "Data tidak ditemukan.\n";
+}
+
+void cariTiket() {
+    string nama;
+    cout << "Masukkan nama yang dicari: ";
+    cin >> nama;
+    bool ketemu = false;
+
+    for (const auto& t : daftarTiket) {
+        if (t.nama == nama) {
+            cout << "Ditemukan: " << t.nama
+                 << " | Kursi: " << t.kodeKursi
+                 << " | Film: " << t.film
+                 << " | Hari: " << t.hari
+                 << " | Jadwal: " << t.jadwal
+                 << " | Harga: Rp" << t.harga << endl;
+            ketemu = true;
+        }
+    }
+    if (!ketemu)
+        cout << "Data tidak ditemukan.\n";
+}
+
+void urutkanTiket() {
+    sort(daftarTiket.begin(), daftarTiket.end(), [](Tiket a, Tiket b) {
+        return a.kodeKursi < b.kodeKursi;
+    });
+    cout << "Data telah diurutkan berdasarkan kode kursi.\n";
+}
+
+void tampilkanRiwayat() {
+    cout << "\nRiwayat Pembatalan:\n";
+    stack<Tiket> temp = pembatalan;
+    while (!temp.empty()) {
+        Tiket t = temp.top(); temp.pop();
+        cout << "Nama: " << t.nama
+             << " | Kursi: " << t.kodeKursi
+             << " | Film: " << t.film
+             << " | Hari: " << t.hari
+             << " | Jadwal: " << t.jadwal
+             << " | Harga: Rp" << t.harga << endl;
+    }
+}
+
+void tampilkanStatistik() {
+    cout << "\n=== Statistik Pemesanan ===\n";
+    cout << "Total tiket terjual: " << daftarTiket.size() << endl;
+
+    map<string, int> frekuensi;
+    for (auto& t : daftarTiket)
+        frekuensi[t.kodeKursi]++;
+
+    if (!frekuensi.empty()) {
+        auto populer = max_element(frekuensi.begin(), frekuensi.end(),
+            [](auto& a, auto& b) { return a.second < b.second; });
+        cout << "Kursi paling populer: " << populer->first << endl;
+    }
+}
+
+int main() {
+    int pilih;
+    do {
+        cout << "\n=== SISTEM TIKET BIOSKOP ===\n";
+        cout << "1. Tambah Pemesanan\n";
+        cout << "2. Tampilkan Semua Tiket\n";
+        cout << "3. Edit Tiket\n";
+        cout << "4. Hapus Tiket\n";
+        cout << "5. Cari Tiket\n";
+        cout << "6. Urutkan Tiket (Kode Kursi)\n";
+        cout << "7. Tampilkan Riwayat Pembatalan\n";
+        cout << "8. Tampilkan Status Kursi\n";
+        cout << "9. Statistik Pemesanan\n";
+        cout << "0. Keluar\n";
+        cout << "Pilih: ";
+        cin >> pilih;
+
+        switch (pilih) {
+            case 1: tambahPemesanan(); break;
+            case 2: tampilkanTiket(); break;
+            case 3: editTiket(); break;
+            case 4: hapusTiket(); break;
+            case 5: cariTiket(); break;
+            case 6: urutkanTiket(); break;
+            case 7: tampilkanRiwayat(); break;
+            case 8: tampilkanKursi(); break;
+            case 9: tampilkanStatistik(); break;
+            case 0: cout << "Terima kasih sudah menggunakan sistem tiket bioskop!\n"; break;
+            default: cout << "Pilihan tidak valid!\n"; break;
+        }
+    } while (pilih != 0);
+
+    return 0;
+}
