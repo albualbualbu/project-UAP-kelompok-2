@@ -287,6 +287,43 @@ void urutkanTiketBerdasarkanHarga() {
     cout << "\n=== Tiket Diurutkan berdasarkan Harga ===\n";
     for (const auto& t : copyTiket) cetakTiket(t);
 }
+int main() {
+    int pilih;
+    do {
+        cout << "\n=== MENU BIOSKOP ===\n";
+        cout << "1. Tambah Pemesanan\n";
+        cout << "2. Lihat Transaksi Hari Ini\n";
+        cout << "3. Ubah Metode Pembayaran\n";
+        cout << "4. Batalkan Tiket\n";
+        cout << "5. Cari Tiket\n";
+        cout << "6. Urutkan Berdasarkan Harga\n";
+        cout << "7. Lihat Riwayat Pembatalan\n";
+        cout << "8. Lihat Leaderboard Poin\n";
+        cout << "0. Keluar\n";
+        cout << "Pilih: ";
+        if (!(cin >> pilih)) {
+            cout << "Input harus angka!\n";
+            cin.clear();
+            cin.ignore(1000, '\n');
+            continue;
+        }
+
+        switch (pilih) {
+            case 1: tambahPemesanan(); break;
+            case 2: tampilkanTransaksiHariIni(); break;
+            case 3: updateTiket(); break;
+            case 4: hapusTiket(); break;
+            case 5: cariTiket(); break;
+            case 6: urutkanTiketBerdasarkanHarga(); break;
+            case 7: tampilkanPembatalan(); break;
+            case 8: tampilkanPoinTertinggi(); break;
+            case 0: cout << "Terima kasih telah memesan tiket bioskop!\n"; break;
+            default: cout << "Pilihan tidak valid.\n"; break;
+        }
+    } while (pilih != 0);
+
+    return 0;
+}
 
 
 
