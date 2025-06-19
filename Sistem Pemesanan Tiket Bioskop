@@ -12,13 +12,13 @@
 
 using namespace std;
 
-
+//struktur data untuk menyimpan informasi tiket
 struct Tiket {
     string nama, kodeKursi, film, hari, jadwal, metodeBayar, studio;
     int harga;
 };
 
-
+//stuktur data utama
 queue<Tiket> antrianTiket;
 stack<Tiket> pembatalan;
 vector<Tiket> daftarTiket;
@@ -26,12 +26,12 @@ vector<Tiket> transaksiHariIni;
 map<string, int> poinPelanggan;
 map<string, string> studioPerNama;
 
-
+//array untuk menandai kursi yang sudah terisi
 const int ROWS = 5;
 const int COLS = 10;
 bool kursiTerisi[ROWS][COLS] = { false };
 
-
+//daftar film dan studio
 vector<string> daftarFilm = {
     "Jumbo", "Ada Apa Dengan Cinta", "Waktu Maghrib", "KKN Desa Penari",
     "Ipar Adalah Maut", "Agak Laen", "Pengabdi Setan", "Dilan 1990"
@@ -39,7 +39,7 @@ vector<string> daftarFilm = {
 
 vector<string> daftarStudio = { "Studio 1", "Studio 2", "Studio 3", "Studio 4" };
 
-
+//konversi kode kursi(A1,B3) menjadi indeks array
 bool konversiKodeKursi(const string& kode, int& row, int& col) {
     if (kode.length() < 2 || kode.length() > 3) return false;
     row = toupper(kode[0]) - 'A';
@@ -51,7 +51,7 @@ bool konversiKodeKursi(const string& kode, int& row, int& col) {
     return row >= 0 && row < ROWS && col >= 0 && col < COLS;
 }
 
-
+//menampilkan layout kursi dengan status terisi
 void tampilkanKursi() {
     cout << "\nTata Letak Kursi (XX = Terisi):\n";
     for (int i = 0; i < ROWS; ++i) {
@@ -63,7 +63,7 @@ void tampilkanKursi() {
     }
 }
 
-
+//mencetak detail tiket 
 void cetakTiket(const Tiket& t) {
     cout << "\n===== Tiket Bioskop =====\n";
     cout << "Nama   : " << t.nama << endl;
@@ -77,7 +77,7 @@ void cetakTiket(const Tiket& t) {
     cout << "=========================\n";
 }
 
-
+//hitung harga berdasarkan hari dan waktu tayang
 int hitungHarga(const string& hari, const string& jadwal) {
     bool weekend = (hari == "Sabtu" || hari == "Minggu");
     int harga = weekend ? 60000 : 50000;
@@ -90,20 +90,20 @@ int hitungHarga(const string& hari, const string& jadwal) {
     return harga;
 }
 
-
+//tambahkan poin loyalitas pelanggan
 void tambahPoin(const string& nama) {
     poinPelanggan[nama] += 10;
     cout << "Poin " << nama << ": " << poinPelanggan[nama] << " poin\n";
 }
 
-
+//cek apakah hari kamis(untuk promo)
 bool isHariKamis(const string& hari) {
     string h = hari;
     transform(h.begin(), h.end(), h.begin(), ::tolower);
     return h == "kamis";
 }
 
-
+//simpan transaksi ke file eksternal 
 void simpanTransaksiKeFile() {
     ofstream file("transaksi.txt", ios::app);
     for (const auto& t : transaksiHariIni) {
@@ -113,7 +113,7 @@ void simpanTransaksiKeFile() {
     cout << "Transaksi disimpan ke file.\n";
 }
 
-
+//menampilkan leaderboard poin
 void tampilkanPoinTertinggi() {
     cout << "\n=== Leaderboard Poin ===\n";
     for (auto& p : poinPelanggan) {
@@ -121,7 +121,7 @@ void tampilkanPoinTertinggi() {
     }
 }
 
-
+//menampilkan riwayat pembatalan tiket
 void tampilkanPembatalan() {
     stack<Tiket> temp = pembatalan;
     cout << "\n=== Riwayat Pembatalan Tiket ===\n";
@@ -131,7 +131,7 @@ void tampilkanPembatalan() {
     }
 }
 
-
+//fungsi utama pemesanan tiket
 void tambahPemesanan() {
     string nama, hari, jadwal, metode;
     int jumlah;
@@ -207,7 +207,7 @@ void tambahPemesanan() {
     simpanTransaksiKeFile();
 }
 
-
+//menampilkan transaksi hari ini dan total pendapatan
 void tampilkanTransaksiHariIni() {
     int total = 0;
     cout << "\n=== Transaksi Hari Ini ===\n";
@@ -225,7 +225,7 @@ void tampilkanTransaksiHariIni() {
     cout << "Total pendapatan   : Rp" << total << endl;
 }
 
-
+//update metode pembayaran tiket
 void updateTiket() {
     string nama, kursi;
     cin.ignore();
@@ -244,7 +244,7 @@ void updateTiket() {
     if (!ditemukan) cout << "Tiket tidak ditemukan.\n";
 }
 
-
+//menghapus tiket dari daftar dan menandai kursi sebagai kosong
 void hapusTiket() {
     string nama, kursi;
     cin.ignore();
@@ -266,7 +266,7 @@ void hapusTiket() {
     if (!ditemukan) cout << "Tiket tidak ditemukan.\n";
 }
 
-
+//mencari tiket berdasarkan nama
 void cariTiket() {
     string nama;
     cin.ignore();
@@ -278,7 +278,7 @@ void cariTiket() {
     if (!ditemukan) cout << "Tiket tidak ditemukan.\n";
 }
 
-
+/mengurutkan tiket berdasarkan harga secara ascending
 void urutkanTiketBerdasarkanHarga() {
     vector<Tiket> copyTiket = daftarTiket;
     sort(copyTiket.begin(), copyTiket.end(), [](const Tiket& a, const Tiket& b) {
